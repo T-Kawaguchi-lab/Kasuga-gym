@@ -10,14 +10,15 @@ from ui_utils.month import resolve_ym, ym_selector
 from ui_utils.storage import ensure_month_dirs, read_yaml, write_yaml
 from ui_utils.runner import run_allocator
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-
 st.set_page_config(page_title="管理者：設定と実行 / Admin", page_icon="🛠", layout="wide")
-st.header("管理者：設定と実行 / Admin: Settings & Run")
 
-chosen = ym_selector(resolve_ym())
+BASE_DIR = Path(__file__).resolve().parents[1]
+current = resolve_ym()
+chosen = ym_selector(current)
 ym = chosen.ym
 paths = ensure_month_dirs(BASE_DIR, ym)
+
+st.header("管理者：設定と実行 / Admin: Settings & Run")
 
 data_dir = paths["data_dir"]
 out_dir = paths["out_dir"]
@@ -56,7 +57,7 @@ with col2:
 
 st.subheader("利用可能時間（選択式）/ Availability (select)")
 st.write("各日ごとに「開始・終了」を選ぶだけです。/ Just select start/end for each day.")
-st.write("※ 2枠（開始2/終了2）も必要なら設定できます（任意）。/ Slot2 is optional.")
+st.write("※ 2枠（開始2/終了2）は **ほとんど使わない想定** なので、必要なときだけ表示して設定できます。/ Slot2 is optional and hidden by default.")
 
 # Time options (30-min steps)
 def _time_options():
@@ -84,7 +85,6 @@ def _sel_to_row(sel):
 avail = cfg.get("availability", {}) or {}
 
 # Ensure availability has ALL days (default: unavailable) so users don't need to save 'unavailable' manually.
-# Normalize keys to strings 1..last_day.
 _default_row = [None, None, None, None]
 _normalized = {}
 for k, v in (avail or {}).items():
@@ -103,7 +103,6 @@ if _changed:
     cfg["availability"] = avail
     write_yaml(config_path, cfg)
 
-
 # Bulk set
 with st.expander("まとめて設定 / Bulk set", expanded=False):
     st.write("平日/土日をまとめて設定できます。/ Apply settings to weekdays/weekends.")
@@ -115,7 +114,8 @@ with st.expander("まとめて設定 / Bulk set", expanded=False):
     with b3:
         bulk_end = st.selectbox("終了 / End", TIME_OPTS, index=TIME_OPTS.index("21:00") if "21:00" in TIME_OPTS else 0)
 
-    bulk_slot2 = st.checkbox("2枠も設定 / Also set slot2", value=False)
+    st.markdown("##### 2枠設定（任意）/ Slot2 (optional)")
+    bulk_slot2 = st.checkbox("2枠もまとめて設定する / Also set slot2", value=False)
     if bulk_slot2:
         c4, c5 = st.columns(2)
         with c4:
@@ -143,7 +143,7 @@ st.markdown("### 日別設定 / Per-day settings")
 
 for day in range(1, last_day + 1):
     key = str(day)
-    row = avail.get(key) or avail.get(day) or [None, None, None, None]
+    row = avail.get(key) or [None, None, None, None]
     s1, e1, s2, e2 = _row_to_sel(row)
 
     wd = Date(year_i, month_i, day).weekday()
@@ -151,15 +151,23 @@ for day in range(1, last_day + 1):
     wd_en = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][wd]
 
     with st.expander(f"{day}日（{wd_ja}/{wd_en}）/ Day {day}", expanded=False):
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2 = st.columns(2)
         s1_sel = c1.selectbox("開始1 / Start1", TIME_OPTS, index=TIME_OPTS.index(s1) if s1 in TIME_OPTS else 0, key=f"d{day}_s1")
         e1_sel = c2.selectbox("終了1 / End1", TIME_OPTS, index=TIME_OPTS.index(e1) if e1 in TIME_OPTS else 0, key=f"d{day}_e1")
-        s2_sel = c3.selectbox("開始2 / Start2", TIME_OPTS, index=TIME_OPTS.index(s2) if s2 in TIME_OPTS else 0, key=f"d{day}_s2")
-        e2_sel = c4.selectbox("終了2 / End2", TIME_OPTS, index=TIME_OPTS.index(e2) if e2 in TIME_OPTS else 0, key=f"d{day}_e2")
+
+        # Slot2: hidden by default (since rarely used)
+        has_slot2 = (s2 != "（利用不可 / Unavailable）" or e2 != "（利用不可 / Unavailable）")
+        use_slot2 = st.checkbox("2枠設定を表示して編集する（任意）/ Edit slot2 (optional)", value=has_slot2, key=f"d{day}_use2")
+
+        if use_slot2:
+            c3, c4 = st.columns(2)
+            s2_sel = c3.selectbox("開始2 / Start2", TIME_OPTS, index=TIME_OPTS.index(s2) if s2 in TIME_OPTS else 0, key=f"d{day}_s2")
+            e2_sel = c4.selectbox("終了2 / End2", TIME_OPTS, index=TIME_OPTS.index(e2) if e2 in TIME_OPTS else 0, key=f"d{day}_e2")
+        else:
+            s2_sel, e2_sel = "（利用不可 / Unavailable）", "（利用不可 / Unavailable）"
 
         new_row = _sel_to_row([s1_sel, e1_sel, s2_sel, e2_sel])
 
-        # Save if changed
         if st.button("この日の設定を保存 / Save this day", key=f"save_day_{day}"):
             avail[key] = new_row
             cfg["availability"] = avail
@@ -172,15 +180,14 @@ st.subheader("割り当て実行 / Run allocation")
 st.write("このボタンは **sourcecode/main.py を変更せず** そのまま実行します。/ This runs sourcecode/main.py as-is.")
 
 if st.button("▶ 実行 / Run", type="primary"):
-    # Ensure year/month consistency
     cfg["year"] = year_i
     cfg["month"] = month_i
     cfg["availability"] = avail
     write_yaml(config_path, cfg)
 
     result = run_allocator(BASE_DIR, config_path, ym)
-    if result.ok:
+    if getattr(result, "ok", False):
         st.success("完了 / Done")
     else:
         st.error("失敗 / Failed")
-    st.code(result.log, language="text")
+    st.code(getattr(result, "log", str(result)), language="text")

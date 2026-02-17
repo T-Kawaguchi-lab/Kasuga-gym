@@ -9,15 +9,19 @@ import streamlit as st
 
 from ui_utils.month import resolve_ym, ym_selector
 from ui_utils.storage import ensure_month_dirs, read_json, write_json
-
-BASE_DIR = Path(__file__).resolve().parents[1]
+from ui_utils.month import resolve_ym, ym_selector
 
 st.set_page_config(page_title="利用者：イベント入力 / User: Events", page_icon="📅", layout="wide")
-st.header("利用者：イベント入力 / User: Event Requests")
 
-chosen = ym_selector(resolve_ym())
+BASE_DIR = Path(__file__).resolve().parents[1]
+current = resolve_ym()
+chosen = ym_selector(current)
 ym = chosen.ym
 paths = ensure_month_dirs(BASE_DIR, ym)
+# Predefined teams (editable here)
+DEFAULT_TEAMS = ['KickChat T-ACT', "SPIKERS'inc", 'ULISバドミントン部', 'ULISバレーボール部', '中国留学生学友会', '医学フットサル同好会', 'インドネシア学友会']
+
+st.header("利用者：イベント入力 / User: Event Requests")
 
 pref_path = paths["data_dir"] / "preferences.json"
 event_path = paths["data_dir"] / "events.json"
@@ -27,7 +31,12 @@ events: list[dict] = read_json(event_path, default=[])
 
 st.caption(f"通常の保存先 / Default save: data/{ym}/events.json（※別月の日付を選ぶと、その月の events.json に自動保存します）")
 
-teams = sorted(prefs.keys())
+# Team list: predefined first, then any existing in prefs
+teams = []
+for t in list(DEFAULT_TEAMS) + sorted(prefs.keys()):
+    if t and t not in teams:
+        teams.append(t)
+
 team = st.selectbox("団体 / Team", options=teams + ["（新規追加 / New）"], index=0 if teams else 0)
 if team == "（新規追加 / New）":
     team = st.text_input("新規団体名 / New team name")
@@ -75,8 +84,6 @@ if st.button("イベント希望を追加 / Add", type="primary"):
         st.error("開始時刻は HH:MM 形式で入力してください / Start time must be HH:MM")
         st.stop()
 
-    dt_start = datetime.combine(date, datetime.strptime(start_norm, "%H:%M").time())
-
     item = {
         "team": team,
         "date": str(date),
@@ -103,7 +110,6 @@ st.subheader("他団体のイベント希望（一覧）/ Other teams' event req
 st.caption("※ 行番号 / Row は **入力した順番** です / Row number is the **input order**")
 
 if events:
-    # Keep original row id for deletion
     rows = []
     for i, e in enumerate(events, start=1):
         row = {"行番号 / Row": i}
@@ -113,8 +119,6 @@ if events:
     df = pd.DataFrame(rows)
 
     # Ensure legacy files are supported
-    # - New format: start + duration_hours (no 'end' stored)
-    # - Legacy format: may have 'end' and/or missing 'duration_hours' / 'note'
     if "duration_hours" not in df.columns:
         df["duration_hours"] = 4
     df["duration_hours"] = df["duration_hours"].fillna(4)
@@ -144,11 +148,11 @@ if events:
         df["note"] = ""
     else:
         df["note"] = df["note"].fillna("")
-# Sorting for readability (but keep row id)
+
+    # Sorting for readability (but keep row id)
     if {"date","start"}.issubset(df.columns):
         df = df.sort_values(["date", "start", "team"], kind="stable")
 
-    # Filters
     filt_team = st.multiselect(
         "表示する団体（空=全て）/ Filter teams (empty=all)",
         options=sorted(df["team"].unique().tolist())
@@ -156,7 +160,6 @@ if events:
     if filt_team:
         df = df[df["team"].isin(filt_team)]
 
-    # Render as HTML table (no pyarrow)
     show = df[["行番号 / Row", "team", "date", "start", "end", "note"]].copy()
     show.columns = ["行番号 / Row", "団体 / Team", "日付 / Date", "開始 / Start", "終了 / End", "メモ / Note"]
     st.markdown(show.to_html(index=False, escape=True), unsafe_allow_html=True)

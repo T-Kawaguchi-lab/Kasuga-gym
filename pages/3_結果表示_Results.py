@@ -9,15 +9,18 @@ import streamlit as st
 
 from ui_utils.month import resolve_ym, ym_selector
 from ui_utils.storage import ensure_month_dirs
-
-BASE_DIR = Path(__file__).resolve().parents[1]
+from ui_utils.month import resolve_ym, ym_selector
 
 st.set_page_config(page_title="結果の詳細表示 / Results", page_icon="📊", layout="wide")
-st.title("結果の詳細表示 / Results")
 
-chosen = ym_selector(resolve_ym())
+BASE_DIR = Path(__file__).resolve().parents[1]
+current = resolve_ym()
+chosen = ym_selector(current)
 ym = chosen.ym
 paths = ensure_month_dirs(BASE_DIR, ym)
+
+st.title("結果の詳細表示 / Results")
+
 out_dir: Path = paths["out_dir"]
 
 st.caption(f"読み込み先 / Load from: output/{ym}/")
