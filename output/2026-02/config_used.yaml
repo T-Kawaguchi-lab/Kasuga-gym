@@ -1,0 +1,145 @@
+year: 2026
+month: 2
+min_slots: 3
+max_solve_seconds: 60
+availability:
+  '1':
+  - '11:00'
+  - '21:00'
+  - null
+  - null
+  '2':
+  - '16:30'
+  - '18:00'
+  - null
+  - null
+  '4':
+  - '13:30'
+  - '18:00'
+  - null
+  - null
+  '6':
+  - '16:30'
+  - '19:00'
+  - null
+  - null
+  '7':
+  - '17:00'
+  - '21:00'
+  - null
+  - null
+  '8':
+  - '11:00'
+  - '21:00'
+  - null
+  - null
+  '9':
+  - '16:30'
+  - '18:00'
+  - null
+  - null
+  '11':
+  - 08:30
+  - '18:00'
+  - null
+  - null
+  '14':
+  - '17:00'
+  - '21:00'
+  - null
+  - null
+  '15':
+  - '11:00'
+  - '21:00'
+  - null
+  - null
+  '16':
+  - '16:30'
+  - '18:00'
+  - null
+  - null
+  '20':
+  - '16:30'
+  - '21:00'
+  - null
+  - null
+  '21':
+  - '17:00'
+  - '21:00'
+  - null
+  - null
+  '22':
+  - '11:00'
+  - '21:00'
+  - null
+  - null
+  '23':
+  - 08:30
+  - '18:00'
+  - null
+  - null
+  '27':
+  - '16:30'
+  - '18:00'
+  - null
+  - null
+  '3':
+  - null
+  - null
+  - null
+  - null
+  '5':
+  - null
+  - null
+  - null
+  - null
+  '10':
+  - null
+  - null
+  - null
+  - null
+  '12':
+  - null
+  - null
+  - null
+  - null
+  '13':
+  - null
+  - null
+  - null
+  - null
+  '17':
+  - null
+  - null
+  - null
+  - null
+  '18':
+  - null
+  - null
+  - null
+  - null
+  '19':
+  - null
+  - null
+  - null
+  - null
+  '24':
+  - null
+  - null
+  - null
+  - null
+  '25':
+  - null
+  - null
+  - null
+  - null
+  '26':
+  - null
+  - null
+  - null
+  - null
+  '28':
+  - null
+  - null
+  - null
+  - null

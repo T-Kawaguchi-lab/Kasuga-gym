@@ -1,0 +1,9 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.ipynb
+
+# 実行結果はイメージに入れない（毎回生成）
+output/

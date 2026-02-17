@@ -1,0 +1,24 @@
+[[pages]]
+path = "Home.py"
+name = "ホーム / Home"
+icon = "🏠"
+
+[[pages]]
+path = "pages/1_user_preferences.py"
+name = "利用者：希望日入力 / User: Preferred dates"
+icon = "🗓️"
+
+[[pages]]
+path = "pages/2_user_events.py"
+name = "利用者：イベント入力 / User: Events"
+icon = "🎫"
+
+[[pages]]
+path = "pages/3_results.py"
+name = "結果の詳細表示 / Results"
+icon = "📊"
+
+[[pages]]
+path = "pages/9_admin.py"
+name = "管理者：設定と実行 / Admin"
+icon = "🛠️"
