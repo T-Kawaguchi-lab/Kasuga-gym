@@ -38,4 +38,9 @@ RUN mkdir -p /app/output
 # ------------------------------------------------------------
 # 実行（あなたの構成に合わせて）
 # ------------------------------------------------------------
-CMD ["python", "sourcecode/main.py"]
+# HF Spaces はデフォルトで 7860 を公開（READMEの app_port と揃える）
+EXPOSE 7860
+
+# Streamlit を 0.0.0.0:7860 で起動
+# ※HF Spaces は iframe/cookie制限があるので、必要なら XSRF をOFF（後述）
+CMD ["sh", "-c", "streamlit run Home.py --server.address=0.0.0.0 --server.port=7860 --server.headless=true --server.enableXsrfProtection=false"]
